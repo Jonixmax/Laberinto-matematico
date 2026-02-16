@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laberinto Matemático</title>
+    <style>
+        body {
+            background-color: #2c3e50; /* Fondo elegante oscuro */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            color: white;
+        }
+
+        h1 { margin-bottom: 10px; text-shadow: 2px 2px 4px #000; }
+        p { margin-bottom: 20px; color: #ecf0f1; }
+
+        /* EL TABLERO DE JUEGO */
+        #tablero {
+            position: relative;
+            /* Tamaño exacto para que coincida con tu imagen */
+            width: 1000px;
+            height: 1200px;
+            
+            /* --- CARGA AUTOMÁTICA DE LA IMAGEN --- */
+            /* Busca la imagen en la misma carpeta */
+            background-image: url('fondo.jpg'); 
+            
+            background-repeat: no-repeat;
+            background-size: contain; 
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            margin: 0 auto;
+        }
+
+        /* LAS CAJAS DE RESPUESTA */
+        .caja {
+            position: absolute;
+            width: 48px;
+            height: 34px;
+            
+            /* Estilo visual */
+            border: 2px solid #7f8c8d;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 6px;
+            
+            /* Texto */
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            
+            /* Centrado exacto en la coordenada */
+            transform: translate(-50%, -50%);
+            transition: all 0.2s;
+        }
+
+        /* Efecto al hacer clic */
+        .caja:focus {
+            outline: none;
+            border-color: #3498db;
+            background-color: #fff;
+            transform: translate(-50%, -50%) scale(1.15);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+
+        /* ESTADOS DE RESPUESTA */
+        .correcto {
+            background-color: #2ecc71 !important; /* Verde */
+            border-color: #27ae60 !important;
+            color: white !important;
+        }
+
+        .incorrecto {
+            background-color: #e74c3c !important; /* Rojo */
+            border-color: #c0392b !important;
+            color: white !important;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Desafío Matemático</h1>
+    <p>Calcula y escribe la respuesta. La casilla se pondrá verde si aciertas.</p>
+
+    <div id="tablero">
+        </div>
+
+<script>
+    const tablero = document.getElementById('tablero');
+
+    // 1. TUS COORDENADAS EXACTAS (Pegadas de tu generación anterior)
+    // He añadido las respuestas ("val") lógicas para el inicio del juego.
+    // Tienes que completar el resto cambiando los "?" por números.
+    const datos = [
+        // --- CAMINO DEL 100 (Izquierda Abajo) ---
+        {x:70, y:185, val:"25"},   // 100 ÷ 4
+        {x:216, y:189, val:"16"},  // 25 - 9
+        {x:212, y:305, val:"32"},  // 16 x 2
+        {x:222, y:431, val:"60"},  // 32 + 28
+        {x:218, y:537, val:"12"},  // 60 ÷ 5
+        {x:210, y:659, val:"72"},  // 12 x 6
+        {x:78, y:655, val:"54"},   // 72 - 18 (izquierda)
+        {x:76, y:541, val:"60"},   // 54 + 6 (arriba)
+        {x:76, y:419, val:"20"},   // 60 ÷ 3
+        {x:78, y:777, val:"18"},   // 54 ÷ 3 (abajo)
+        {x:78, y:893, val:"72"},   // 18 x 4
+        {x:80, y:1013, val:"14.4"},// 72 ÷ 5
+
+        // --- CAMINO DEL 20 (Superior) ---
+        {x:366, y:71, val:"4"},    // 20 ÷ 5
+        {x:498, y:75, val:"0.5"},  // 4 ÷ 8
+        {x:646, y:73, val:"1.5"},  // 0.5 + 1 ?? (Revisar lógica de imagen)
+        
+        // --- RESTO DE COORDENADAS (Generadas por ti) ---
+        // Cambia los "?" por la respuesta correcta.
+        {x:776, y:77, val:"?"}, {x:928, y:79, val:"?"}, {x:788, y:187, val:"?"},
+        {x:774, y:301, val:"?"}, {x:922, y:307, val:"?"}, {x:930, y:423, val:"?"},
+        {x:924, y:541, val:"?"}, {x:932, y:663, val:"?"}, {x:922, y:779, val:"?"},
+        {x:788, y:897, val:"?"}, {x:776, y:783, val:"?"}, {x:782, y:667, val:"?"},
+        {x:640, y:549, val:"?"}, {x:784, y:543, val:"?"}, {x:642, y:779, val:"?"},
+        {x:644, y:889, val:"?"}, {x:646, y:1015, val:"?"}, {x:498, y:897, val:"?"},
+        {x:504, y:781, val:"?"}, {x:504, y:659, val:"?"}, {x:504, y:539, val:"?"},
+        {x:498, y:429, val:"?"}, {x:502, y:315, val:"?"}, {x:500, y:195, val:"?"},
+        {x:646, y:307, val:"?"}, {x:358, y:309, val:"?"}, {x:360, y:665, val:"?"},
+        {x:380, y:541, val:"?"}, {x:226, y:1021, val:"?"}, {x:370, y:1017, val:"?"},
+        {x:358, y:895, val:"?"}, {x:220, y:897, val:"?"}, {x:926, y:895, val:"?"},
+        {x:782, y:1009, val:"?"}
+    ];
+
+    // 2. GENERADOR DEL JUEGO
+    function iniciar() {
+        datos.forEach(dato => {
+            const input = document.createElement('input');
+            input.type = "number"; // Teclado numérico en móvil
+            input.className = "caja";
+            
+            // Posicionamiento exacto
+            input.style.left = dato.x + "px";
+            input.style.top = dato.y + "px";
+            
+            // Guardamos la respuesta correcta
+            input.dataset.val = dato.val;
+
+            // Validación en tiempo real
+            input.addEventListener('keyup', function() {
+                // ParseFloat para que 25 sea igual a 25.0
+                const valorUsuario = parseFloat(this.value);
+                const valorCorrecto = parseFloat(this.dataset.val);
+
+                // Verificamos si es un número válido y si coincide
+                if (!isNaN(valorUsuario) && valorUsuario === valorCorrecto) {
+                    this.classList.add('correcto');
+                    this.classList.remove('incorrecto');
+                } else {
+                    this.classList.remove('correcto');
+                    // Solo marcar rojo si hay algo escrito
+                    if (this.value !== "") {
+                        this.classList.add('incorrecto');
+                    } else {
+                        this.classList.remove('incorrecto');
+                    }
+                }
+            });
+
+            tablero.appendChild(input);
+        });
+    }
+
+    // Arrancar el juego
+    iniciar();
+
+</script>
+</body>
+</html>
