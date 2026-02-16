@@ -3,178 +3,416 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laberinto Matemático</title>
+    <title>Mazmorra Matemática: 3 Niveles</title>
     <style>
+        :root {
+            --bg-color: #2b2b2b;
+            --wall-color: #3d3d3d;
+            --path-color: #7f8c8d;
+            --correct-color: #27ae60;
+            --text-color: white;
+            --btn-color: #e67e22;
+        }
+
         body {
-            background-color: #2c3e50; /* Fondo elegante oscuro */
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 100vh;
             margin: 0;
-            padding: 20px;
-            color: white;
+            padding: 10px;
         }
 
-        h1 { margin-bottom: 10px; text-shadow: 2px 2px 4px #000; }
-        p { margin-bottom: 20px; color: #ecf0f1; }
+        h1 { margin: 10px 0; text-align: center; font-size: 1.8rem; text-shadow: 2px 2px 4px #000; }
+        
+        /* HEADER: Nivel y Vidas */
+        #hud {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 480px;
+            margin-bottom: 15px;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border-radius: 10px;
+            box-sizing: border-box;
+        }
+        .hud-item { font-size: 1.2rem; font-weight: bold; }
+        .corazon { color: #e74c3c; }
 
-        /* EL TABLERO DE JUEGO */
-        #tablero {
-            position: relative;
-            /* Tamaño exacto para que coincida con tu imagen */
-            width: 1000px;
-            height: 1200px;
-            
-            /* --- CARGA AUTOMÁTICA DE LA IMAGEN --- */
-            /* Busca la imagen en la misma carpeta */
-            background-image: url('fondo.jpg'); 
-            
-            background-repeat: no-repeat;
-            background-size: contain; 
-            background-color: #fff;
+        /* CONTENEDOR DEL JUEGO */
+        #game-container {
+            display: grid;
+            gap: 5px;
+            background-color: #1a1a1a;
+            padding: 10px;
             border-radius: 15px;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
-            margin: 0 auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+            /* Se define dinámicamente según el nivel */
         }
 
-        /* LAS CAJAS DE RESPUESTA */
-        .caja {
-            position: absolute;
-            width: 48px;
-            height: 34px;
-            
-            /* Estilo visual */
-            border: 2px solid #7f8c8d;
-            background-color: rgba(255, 255, 255, 0.9);
-            border-radius: 6px;
-            
-            /* Texto */
-            text-align: center;
-            font-size: 18px;
+        /* ESTILO DE LAS CELDAS */
+        .cell {
+            width: 70px;
+            height: 70px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            position: relative;
+            background-size: cover;
+        }
+
+        .wall {
+            background-color: var(--wall-color);
+            background-image: linear-gradient(45deg, #444 25%, transparent 25%, transparent 75%, #444 75%, #444),
+            linear-gradient(45deg, #444 25%, transparent 25%, transparent 75%, #444 75%, #444);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            opacity: 0.5;
+        }
+
+        .path {
+            background-color: var(--path-color);
+            border: 2px solid #5a6566;
+        }
+
+        .start { background-color: #2980b9; color: white; font-weight: bold; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+        .finish { background-color: #f1c40f; font-size: 35px; cursor: default; }
+
+        /* INPUTS Y OPERACIONES */
+        .op-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%; height: 100%;
+        }
+
+        .op-label {
+            font-size: 12px;
             font-weight: bold;
-            color: #2c3e50;
-            
-            /* Centrado exacto en la coordenada */
-            transform: translate(-50%, -50%);
-            transition: all 0.2s;
+            background-color: rgba(0,0,0,0.6);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-bottom: 3px;
+            pointer-events: none;
         }
 
-        /* Efecto al hacer clic */
-        .caja:focus {
+        input.math-input {
+            width: 50px;
+            height: 25px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            border: 2px solid #555;
+            border-radius: 5px;
             outline: none;
-            border-color: #3498db;
-            background-color: #fff;
-            transform: translate(-50%, -50%) scale(1.15);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            z-index: 100;
         }
 
         /* ESTADOS DE RESPUESTA */
-        .correcto {
-            background-color: #2ecc71 !important; /* Verde */
-            border-color: #27ae60 !important;
-            color: white !important;
+        .cell.correct {
+            background-color: var(--correct-color) !important;
+            border-color: #2ecc71;
+            box-shadow: 0 0 15px var(--correct-color);
+            transition: all 0.3s ease;
+            transform: scale(1.05);
+            z-index: 10;
+        }
+        .cell.correct input {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 20px;
+            pointer-events: none;
+        }
+        
+        .wrong-anim {
+            animation: shake 0.4s ease-in-out;
+            border-color: #e74c3c !important;
         }
 
-        .incorrecto {
-            background-color: #e74c3c !important; /* Rojo */
-            border-color: #c0392b !important;
-            color: white !important;
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* PANTALLAS DE MENSAJES */
+        #mensaje-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            text-align: center;
+        }
+        #mensaje-titulo { font-size: 3rem; margin-bottom: 20px; color: #f1c40f; }
+        #mensaje-texto { font-size: 1.5rem; margin-bottom: 30px; }
+        .btn {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background-color: var(--btn-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn:hover { transform: scale(1.1); background-color: #d35400; }
+
+        /* RESPONSIVE MÓVIL */
+        @media (max-width: 600px) {
+            .cell { width: 55px; height: 55px; }
+            input.math-input { width: 40px; font-size: 14px; }
+            h1 { font-size: 1.4rem; }
         }
     </style>
 </head>
 <body>
 
-    <h1>Desafío Matemático</h1>
-    <p>Calcula y escribe la respuesta. La casilla se pondrá verde si aciertas.</p>
+    <div id="hud">
+        <div class="hud-item">Nivel: <span id="nivel-display">1</span>/3</div>
+        <div class="hud-item">Vidas: <span id="vidas-display">❤️❤️❤️</span></div>
+    </div>
 
-    <div id="tablero">
+    <h1>🏰 Mazmorra Matemática</h1>
+
+    <div id="game-container">
         </div>
 
+    <div id="mensaje-overlay">
+        <div id="mensaje-titulo">¡Nivel Completado!</div>
+        <div id="mensaje-texto">Prepárate para el siguiente desafío...</div>
+        <button class="btn" id="btn-accion" onclick="siguienteNivel()">Continuar</button>
+    </div>
+
 <script>
-    const tablero = document.getElementById('tablero');
-
-    // 1. TUS COORDENADAS EXACTAS (Pegadas de tu generación anterior)
-    // He añadido las respuestas ("val") lógicas para el inicio del juego.
-    // Tienes que completar el resto cambiando los "?" por números.
-    const datos = [
-        // --- CAMINO DEL 100 (Izquierda Abajo) ---
-        {x:70, y:185, val:"25"},   // 100 ÷ 4
-        {x:216, y:189, val:"16"},  // 25 - 9
-        {x:212, y:305, val:"32"},  // 16 x 2
-        {x:222, y:431, val:"60"},  // 32 + 28
-        {x:218, y:537, val:"12"},  // 60 ÷ 5
-        {x:210, y:659, val:"72"},  // 12 x 6
-        {x:78, y:655, val:"54"},   // 72 - 18 (izquierda)
-        {x:76, y:541, val:"60"},   // 54 + 6 (arriba)
-        {x:76, y:419, val:"20"},   // 60 ÷ 3
-        {x:78, y:777, val:"18"},   // 54 ÷ 3 (abajo)
-        {x:78, y:893, val:"72"},   // 18 x 4
-        {x:80, y:1013, val:"14.4"},// 72 ÷ 5
-
-        // --- CAMINO DEL 20 (Superior) ---
-        {x:366, y:71, val:"4"},    // 20 ÷ 5
-        {x:498, y:75, val:"0.5"},  // 4 ÷ 8
-        {x:646, y:73, val:"1.5"},  // 0.5 + 1 ?? (Revisar lógica de imagen)
+    // --- CONFIGURACIÓN DE LOS 3 NIVELES ---
+    // 'W': Pared
+    // 'S': Inicio (Start)
+    // 'F': Fin (Finish) - Tesoro
+    // {op: '+5', ans: 15}: Operación matemática y respuesta correcta
+    
+    const niveles = [
+        // --- NIVEL 1: FÁCIL (Sumas y Restas, Mapa 4x4) ---
+        {
+            cols: 4,
+            startVal: 10,
+            mapa: [
+                ['S', {op:'+5', ans:15}, 'W', 'W'],
+                ['W', {op:'-3', ans:12}, {op:'+8', ans:20}, 'W'],
+                ['W', 'W', {op:'-10', ans:10}, {op:'+2', ans:12}],
+                ['W', 'W', 'W', 'F']
+            ]
+        },
         
-        // --- RESTO DE COORDENADAS (Generadas por ti) ---
-        // Cambia los "?" por la respuesta correcta.
-        {x:776, y:77, val:"?"}, {x:928, y:79, val:"?"}, {x:788, y:187, val:"?"},
-        {x:774, y:301, val:"?"}, {x:922, y:307, val:"?"}, {x:930, y:423, val:"?"},
-        {x:924, y:541, val:"?"}, {x:932, y:663, val:"?"}, {x:922, y:779, val:"?"},
-        {x:788, y:897, val:"?"}, {x:776, y:783, val:"?"}, {x:782, y:667, val:"?"},
-        {x:640, y:549, val:"?"}, {x:784, y:543, val:"?"}, {x:642, y:779, val:"?"},
-        {x:644, y:889, val:"?"}, {x:646, y:1015, val:"?"}, {x:498, y:897, val:"?"},
-        {x:504, y:781, val:"?"}, {x:504, y:659, val:"?"}, {x:504, y:539, val:"?"},
-        {x:498, y:429, val:"?"}, {x:502, y:315, val:"?"}, {x:500, y:195, val:"?"},
-        {x:646, y:307, val:"?"}, {x:358, y:309, val:"?"}, {x:360, y:665, val:"?"},
-        {x:380, y:541, val:"?"}, {x:226, y:1021, val:"?"}, {x:370, y:1017, val:"?"},
-        {x:358, y:895, val:"?"}, {x:220, y:897, val:"?"}, {x:926, y:895, val:"?"},
-        {x:782, y:1009, val:"?"}
+        // --- NIVEL 2: MEDIO (Multiplicación y Caminos Falsos, Mapa 5x5) ---
+        {
+            cols: 5,
+            startVal: 5,
+            mapa: [
+                ['S', {op:'x2', ans:10}, 'W', 'W', 'W'],
+                ['W', {op:'+5', ans:15}, {op:'x2', ans:30}, {op:'-5', ans:25}, 'W'],
+                ['W', 'W', 'W', {op:'+10', ans:35}, 'W'], // Camino correcto
+                ['W', {op:'x0', ans:0}, 'W', {op:'-5', ans:30}, {op:'x2', ans:60}], // Camino trampa (izq)
+                ['W', 'W', 'W', 'W', 'F']
+            ]
+        },
+
+        // --- NIVEL 3: DIFÍCIL (Divisiones y Ruta Larga, Mapa 6x6) ---
+        {
+            cols: 6,
+            startVal: 100,
+            mapa: [
+                ['S', {op:'/2', ans:50}, {op:'-10', ans:40}, 'W', 'W', 'W'],
+                ['W', 'W', {op:'/4', ans:10}, {op:'x5', ans:50}, 'W', 'W'],
+                ['W', {op:'+15', ans:65}, 'W', {op:'-20', ans:30}, 'W', 'W'], // Falso camino izq
+                ['W', {op:'x2', ans:130}, 'W', {op:'/3', ans:10}, {op:'x9', ans:90}, 'W'],
+                ['W', 'W', 'W', 'W', {op:'-40', ans:50}, {op:'/2', ans:25}],
+                ['W', 'W', 'W', 'W', 'W', 'F']
+            ]
+        }
     ];
 
-    // 2. GENERADOR DEL JUEGO
-    function iniciar() {
-        datos.forEach(dato => {
-            const input = document.createElement('input');
-            input.type = "number"; // Teclado numérico en móvil
-            input.className = "caja";
-            
-            // Posicionamiento exacto
-            input.style.left = dato.x + "px";
-            input.style.top = dato.y + "px";
-            
-            // Guardamos la respuesta correcta
-            input.dataset.val = dato.val;
+    // Variables del juego
+    let nivelActual = 0;
+    let vidas = 3;
+    let pasosTotales = 0;
+    let pasosCompletados = 0;
 
-            // Validación en tiempo real
-            input.addEventListener('keyup', function() {
-                // ParseFloat para que 25 sea igual a 25.0
-                const valorUsuario = parseFloat(this.value);
-                const valorCorrecto = parseFloat(this.dataset.val);
+    const container = document.getElementById('game-container');
+    const hudNivel = document.getElementById('nivel-display');
+    const hudVidas = document.getElementById('vidas-display');
+    const overlay = document.getElementById('mensaje-overlay');
+    const tituloMsg = document.getElementById('mensaje-titulo');
+    const textoMsg = document.getElementById('mensaje-texto');
+    const btnAccion = document.getElementById('btn-accion');
 
-                // Verificamos si es un número válido y si coincide
-                if (!isNaN(valorUsuario) && valorUsuario === valorCorrecto) {
-                    this.classList.add('correcto');
-                    this.classList.remove('incorrecto');
-                } else {
-                    this.classList.remove('correcto');
-                    // Solo marcar rojo si hay algo escrito
-                    if (this.value !== "") {
-                        this.classList.add('incorrecto');
-                    } else {
-                        this.classList.remove('incorrecto');
-                    }
+    // --- FUNCIÓN PRINCIPAL DE CONSTRUCCIÓN ---
+    function cargarNivel(indice) {
+        container.innerHTML = ''; // Limpiar tablero anterior
+        const nivel = niveles[indice];
+        
+        // Configurar Grid CSS según columnas
+        container.style.gridTemplateColumns = `repeat(${nivel.cols}, 1fr)`;
+        
+        hudNivel.innerText = indice + 1;
+        pasosTotales = 0;
+        pasosCompletados = 0;
+
+        // Recorrer el mapa y crear celdas
+        for (let fila = 0; fila < nivel.mapa.length; fila++) {
+            for (let col = 0; col < nivel.mapa[fila].length; col++) {
+                const celdaData = nivel.mapa[fila][col];
+                const celdaDiv = document.createElement('div');
+                celdaDiv.className = 'cell';
+
+                // TIPO: PARED
+                if (celdaData === 'W') {
+                    celdaDiv.classList.add('wall');
+                } 
+                // TIPO: INICIO
+                else if (celdaData === 'S') {
+                    celdaDiv.classList.add('start', 'path');
+                    celdaDiv.innerHTML = `<span>${nivel.startVal}</span>`;
+                } 
+                // TIPO: TESORO (FIN)
+                else if (celdaData === 'F') {
+                    celdaDiv.classList.add('finish', 'path');
+                    celdaDiv.innerHTML = '🏆';
+                    celdaDiv.id = 'meta-final';
+                } 
+                // TIPO: OPERACIÓN MATEMÁTICA
+                else if (typeof celdaData === 'object') {
+                    pasosTotales++;
+                    celdaDiv.classList.add('path');
+                    
+                    const opContainer = document.createElement('div');
+                    opContainer.className = 'op-container';
+
+                    // Icono visual
+                    let signo = celdaData.op.charAt(0);
+                    if(signo === 'x') signo = '✖️';
+                    if(signo === '/') signo = '➗';
+                    if(signo === '+') signo = '➕';
+                    if(signo === '-') signo = '➖';
+                    const num = celdaData.op.substring(1);
+
+                    const label = document.createElement('div');
+                    label.className = 'op-label';
+                    label.innerHTML = `${signo} ${num}`;
+
+                    const input = document.createElement('input');
+                    input.type = 'number'; // Teclado numérico en móvil
+                    input.className = 'math-input';
+                    input.dataset.ans = celdaData.ans;
+
+                    // EVENTO DE VALIDACIÓN
+                    input.addEventListener('change', function() { validarRespuesta(this, celdaDiv); });
+                    input.addEventListener('keyup', function(e) { 
+                        if (e.key === 'Enter') validarRespuesta(this, celdaDiv); 
+                    });
+
+                    opContainer.appendChild(label);
+                    opContainer.appendChild(input);
+                    celdaDiv.appendChild(opContainer);
                 }
-            });
 
-            tablero.appendChild(input);
-        });
+                container.appendChild(celdaDiv);
+            }
+        }
     }
 
-    // Arrancar el juego
-    iniciar();
+    function validarRespuesta(input, celda) {
+        // Evitar re-validar si ya está correcto
+        if (celda.classList.contains('correct')) return;
+
+        if (parseInt(input.value) === parseInt(input.dataset.ans)) {
+            // RESPUESTA CORRECTA
+            celda.classList.add('correct');
+            // Reemplazar input por texto fijo para que se vea limpio
+            input.parentElement.innerHTML = `<span style="font-size:24px; font-weight:bold;">${input.value}</span>`;
+            
+            pasosCompletados++;
+            checkVictoria();
+        } else {
+            // RESPUESTA INCORRECTA
+            if (input.value !== '') {
+                quitarVida();
+                input.classList.add('wrong-anim');
+                input.value = ''; // Borrar para intentar de nuevo
+                setTimeout(() => input.classList.remove('wrong-anim'), 500);
+            }
+        }
+    }
+
+    function quitarVida() {
+        vidas--;
+        actualizarHUD();
+        if (vidas <= 0) {
+            mostrarMensaje("¡Game Over!", "Te has quedado sin vidas.", "Reintentar", () => location.reload());
+        }
+    }
+
+    function actualizarHUD() {
+        let corazones = "";
+        for(let i=0; i<vidas; i++) corazones += "❤️";
+        hudVidas.innerText = corazones;
+    }
+
+    function checkVictoria() {
+        // En este diseño simple, asumimos que si llegas al final (o completas pasos clave) ganas
+        // Para simplificar, desbloqueamos la meta cuando completas el paso anterior a ella
+        // Pero como es un laberinto abierto, simplemente verificaremos si el usuario intenta llegar a la meta
+        // (En esta versión, al completar todos los inputs matemáticos correctos se activa el nivel)
+        
+        if (pasosCompletados === pasosTotales) {
+            // Efecto visual en la meta
+            document.getElementById('meta-final').style.transform = "scale(1.3)";
+            setTimeout(() => {
+                nivelSuperado();
+            }, 500);
+        }
+    }
+
+    function nivelSuperado() {
+        if (nivelActual < niveles.length - 1) {
+            mostrarMensaje(`¡Nivel ${nivelActual + 1} Completado!`, "¡Excelente! Vamos al siguiente desafío.", "Siguiente Nivel", () => {
+                nivelActual++;
+                cargarNivel(nivelActual);
+                cerrarMensaje();
+            });
+        } else {
+            mostrarMensaje("¡VICTORIA TOTAL!", "¡Eres un maestro de las matemáticas! 🏆", "Jugar de Nuevo", () => location.reload());
+        }
+    }
+
+    // --- SISTEMA DE MENSAJES MODALES ---
+    function mostrarMensaje(titulo, texto, boton, accion) {
+        tituloMsg.innerText = titulo;
+        textoMsg.innerText = texto;
+        btnAccion.innerText = boton;
+        btnAccion.onclick = accion;
+        overlay.style.display = 'flex';
+    }
+
+    function cerrarMensaje() {
+        overlay.style.display = 'none';
+    }
+
+    // INICIAR EL JUEGO
+    cargarNivel(0);
 
 </script>
 </body>
