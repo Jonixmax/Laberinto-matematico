@@ -1,0 +1,170 @@
+:root {
+    --bg-color: #2b2b2b;
+    --wall-color: #3d3d3d;
+    --path-color: #7f8c8d;
+    --correct-color: #27ae60;
+    --text-color: white;
+    --btn-color: #e67e22;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 10px;
+}
+
+h1 { margin: 10px 0; text-align: center; font-size: 1.8rem; text-shadow: 2px 2px 4px #000; }
+
+/* HEADER: Nivel y Vidas */
+#hud {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 480px;
+    margin-bottom: 15px;
+    background: rgba(0,0,0,0.5);
+    padding: 10px 20px;
+    border-radius: 10px;
+    box-sizing: border-box;
+}
+.hud-item { font-size: 1.2rem; font-weight: bold; }
+
+/* CONTENEDOR DEL JUEGO */
+#game-container {
+    display: grid;
+    gap: 5px;
+    background-color: #1a1a1a;
+    padding: 10px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    margin-bottom: 20px;
+}
+
+/* ESTILO DE LAS CELDAS */
+.cell {
+    width: 70px;
+    height: 70px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    position: relative;
+    background-size: cover;
+}
+
+.wall {
+    background-color: var(--wall-color);
+    background-image: linear-gradient(45deg, #444 25%, transparent 25%, transparent 75%, #444 75%, #444),
+    linear-gradient(45deg, #444 25%, transparent 25%, transparent 75%, #444 75%, #444);
+    background-size: 20px 20px;
+    background-position: 0 0, 10px 10px;
+    opacity: 0.5;
+}
+
+.path {
+    background-color: var(--path-color);
+    border: 2px solid #5a6566;
+}
+
+.start { background-color: #2980b9; color: white; font-weight: bold; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+.finish { background-color: #f1c40f; font-size: 35px; cursor: default; }
+
+/* INPUTS Y OPERACIONES */
+.op-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%; height: 100%;
+}
+
+.op-label {
+    font-size: 12px;
+    font-weight: bold;
+    background-color: rgba(0,0,0,0.6);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-bottom: 3px;
+    pointer-events: none;
+}
+
+input.math-input {
+    width: 50px;
+    height: 25px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    border: 2px solid #555;
+    border-radius: 5px;
+    outline: none;
+}
+
+/* ESTADOS DE RESPUESTA */
+.cell.correct {
+    background-color: var(--correct-color) !important;
+    border-color: #2ecc71;
+    box-shadow: 0 0 15px var(--correct-color);
+    transition: all 0.3s ease;
+    transform: scale(1.05);
+    z-index: 10;
+}
+.cell.correct input {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 20px;
+    pointer-events: none;
+}
+
+.wrong-anim {
+    animation: shake 0.4s ease-in-out;
+    border-color: #e74c3c !important;
+}
+
+@keyframes shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+    100% { transform: translateX(0); }
+}
+
+/* PANTALLAS DE MENSAJES */
+#mensaje-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9);
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    text-align: center;
+}
+#mensaje-titulo { font-size: 3rem; margin-bottom: 20px; color: #f1c40f; }
+#mensaje-texto { font-size: 1.5rem; margin-bottom: 30px; }
+.btn {
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    background-color: var(--btn-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.btn:hover { transform: scale(1.1); background-color: #d35400; }
+
+/* RESPONSIVE MÓVIL */
+@media (max-width: 600px) {
+    .cell { width: 55px; height: 55px; }
+    input.math-input { width: 40px; font-size: 14px; }
+    h1 { font-size: 1.4rem; }
+}
